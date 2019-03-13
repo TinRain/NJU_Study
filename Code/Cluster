@@ -1,0 +1,132 @@
+import java.io.*;
+import java.lang.*;
+import java.util.*;
+
+public class SpiltString {
+    public static void main(String[] args) throws Exception {
+        BufferedReader in = new BufferedReader(new FileReader(
+                "/Users/njutianyu/Desktop/mcmc_all_history_testsuites_goodweather的副本 3.txt"));
+        String line = null;
+        //int[] a = new int[360];
+        List<String> list = new ArrayList<String>();
+        String lineString = "";
+        SpiltString ss = new SpiltString();
+        List<Integer> CorePoint = new ArrayList<Integer>();//存入核心点
+        List<Integer> NoisePoint  = new ArrayList<Integer>(); //存入噪音点
+        List<Integer> ExtraPoint  = new ArrayList<Integer>(); //存入边界点和噪音点
+       // List<Integer> distancePoint = new ArrayList<Integer>();//存入其余各点和核心点之间点距离
+        //int i =0;
+        while ((line = in.readLine()) != null) {
+            //System.out.println(line);
+            if (line.length() == 0) {
+                list.add(lineString);
+                lineString = "";
+            } else {
+                lineString += line + "\n";
+            }
+        }
+        int[][] distance = new int[list.size()][list.size()];
+        int[] count = new int[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            count[i] = 0;
+        }
+        //int[] sum = new int[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            int[] b = new int[list.size()];
+            for (int j = 0; j < list.size(); j++) {
+                String[] ss1 = list.get(i).split("\n");
+                String[] ss2 = list.get(j).split("\n");
+                int array[][] = new int[ss1.length][ss2.length];
+                for (int m = 0; m < ss1.length; m++) {
+                    for (int n = 0; n < ss2.length; n++) {
+                        array[m][n] = (Distance.getDistance(ss1[m], ss2[n]));
+                        //System.out.print(array[m][n] + " ");
+                    }
+                    //System.out.println();
+                }
+                //System.out.println("*************************************");
+                int[][] dtwArray = new int[array.length][array[0].length];
+                for (int i1 = 0; i1 < array.length; i1++) {
+                    for (int j1 = 0; j1 < array[0].length; j1++) {
+                        if (j1 == 0) {
+                            if (i1 == 0) {
+                                dtwArray[0][0] = array[0][0];
+                            } else {
+                                dtwArray[i1][0] = dtwArray[i1 - 1][0] + array[i1][0];
+                            }
+                        }
+                        if (i1 == 0) {
+                            if (j1 == 0) {
+                                dtwArray[0][0] = array[0][0];
+                            } else {
+                                dtwArray[0][j1] = dtwArray[0][j1 - 1] + array[0][j1];
+                            }
+                        }
+                    }
+                }
+                for (int i2 = 1; i2 < array.length; i2++) {
+                    for (int j2 = 1; j2 < array[0].length; j2++) {
+                        int a[] = {dtwArray[i2 - 1][j2] + array[i2][j2], dtwArray[i2 - 1][j2 - 1] + array[i2][j2], dtwArray[i2][j2 - 1] + array[i2][j2]};
+                        dtwArray[i2][j2] = Arrays.stream(a).min().getAsInt();
+                    }
+                }
+                for (int i3 = 0; i3 < array.length; i3++) {
+                    for (int j3 = 0; j3 < array[0].length; j3++) {
+                        //System.out.print(dtwArray[i3][j3] + " ");
+
+                    }
+                }
+                //System.out.println(dtwArray[array.length - 1][array[0].length - 1]);//输出距离矩阵
+                b[j] = dtwArray[array.length - 1][array[0].length - 1];
+                distance[i][j] = dtwArray[array.length-1][array[0].length-1];
+                //System.out.println(dtwArray[0][array[0].length - 1]);
+
+            }
+            Arrays.sort(b);
+
+            for (int k = 0; k < list.size(); k++) {
+                count[k] += b[k];
+            }
+
+        }
+        for (int g = 0; g < list.size(); g++) {
+           // System.out.println((int) count[g] / list.size());//输出期望
+        }
+        int radius = 280;
+        int minPts = 30;
+        int num = 0;
+        int noise = 0;
+        for(int i=0;i<list.size();i++){
+             int sum = 0;
+            for(int j=0;j<list.size();j++){
+                if(distance[i][j]<=radius){
+                    sum++;
+                }
+            }
+            if(sum>=minPts){
+                CorePoint.add(i);
+                num++;
+            }else{
+                ExtraPoint.add(i);
+            }
+
+        }
+      // System.out.println("核心点的个数为：" + num);
+        for(int i=0;i<CorePoint.size();i++){
+            //System.out.println(CorePoint.get(i));
+        }
+        for(int i=0;i<ExtraPoint.size();i++){
+            boolean flag = true;
+            for(int j=0;j<CorePoint.size();j++){
+                if(distance[ExtraPoint.get(i)][CorePoint.get(j)]<=radius){
+                    flag =false;
+                }
+            }
+            if(flag==true){
+                noise++;
+            }
+        }
+        System.out.println("噪音点的个数为：" + noise);
+
+    }
+}
